@@ -1,0 +1,3 @@
+[submodule "taylor-swift-lyrics"]
+	path = taylor-swift-lyrics
+	url = https://github.com/shaynak/taylor-swift-lyrics.git

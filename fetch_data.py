@@ -1,30 +1,17 @@
+import os
 import requests
-from HTMLParser import HTMLParser
+import pandas as pd
 from bs4 import BeautifulSoup
-from markov_python.cc_markov import MarkovChain
+from cc_markov import MarkovChain
 
-#Grabbing some taylor lyrics from the web
-taytay_urls = ["http://www.metrolyrics.com/you-belong-with-me-lyrics-taylor-swift.html",
-        "http://www.metrolyrics.com/out-of-the-woods-lyrics-taylor-swift.html",
-        "http://www.metrolyrics.com/wildest-dreams-lyrics-taylor-swift.html",
-        "http://www.metrolyrics.com/everything-has-changed-lyrics-taylor-swift.html",
-        "http: // www.metrolyrics.com / mean - lyrics - taylor - swift.html",
-        "http://www.metrolyrics.com/i-knew-you-were-trouble-lyrics-taylor-swift.html",
-        "http://www.metrolyrics.com/back-to-december-lyrics-taylor-swift.html"]
+#Grabbing some taylor lyrics from the taylor-swift-lyrics repo
+df = pd.read_csv('taylor-swift-lyrics/songs.csv')
+lyrics_list = df['Lyrics'].tolist()
 
 #Grabbing some lovely Hitler quotes
 hitler_urls = ["http://www.brainyquote.com/quotes/authors/a/adolf_hitler.html"]
 
 mc = MarkovChain()
-
-def grab_taytay(url):
-    request = requests.get(url)
-    content = request.text
-    soup = BeautifulSoup(content, "html.parser")
-    comments = soup.find_all(id="mid-song-discussion")
-    for comment in comments:
-        comment.extract()
-    return soup.find_all(id="lyrics-body-text")[0].get_text()
 
 def grab_hitler(url):
     request = requests.get(url)
@@ -34,18 +21,26 @@ def grab_hitler(url):
     for result in results:
         yield result.get_text()
 
-for url in taytay_urls:
-    mc.add_string(grab_taytay(url))
+for lyric in lyrics_list:
+    mc.add_string(lyric)
 
 output =  mc.generate_text(max_length=20)
-print "PRE HITLER LYRICS: "
-print " ".join(output)
+print("PRE HITLER LYRICS: ")
+print(" ".join(output))
 
-hitlers = grab_hitler(hitler_urls[0])
+if os.path.exists('hitler_quotes.csv'):
+    df_hitlers = pd.read_csv('hitler_quotes.csv')
+    hitlers = df_hitlers['Quotes'].tolist()
+else:
+    hitlers = list(grab_hitler(hitler_urls[0]))
+    df_hitlers = pd.DataFrame(hitlers, columns=['Quotes'])
+    hitlers = df_hitlers['Quotes'].tolist()
+    df_hitlers.to_csv('hitlers_quotes.csv', index=False)
+
 for hitler in hitlers:
     mc.add_string(hitler)
+    
 
 h_output =  mc.generate_text(max_length=20)
-print "POST HITLER LYRICS: "
-print " ".join(h_output)
-
+print("POST HITLER LYRICS: ")
+print(" ".join(h_output))
